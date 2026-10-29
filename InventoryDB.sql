@@ -1,0 +1,50 @@
+IF DB_ID(N'InventoryDB') IS NULL CREATE DATABASE InventoryDB;
+GO
+USE InventoryDB;
+GO
+
+IF OBJECT_ID('dbo.ChiTietPhieuKho','U') IS NOT NULL DROP TABLE dbo.ChiTietPhieuKho;
+IF OBJECT_ID('dbo.PhieuKho','U') IS NOT NULL DROP TABLE dbo.PhieuKho;
+IF OBJECT_ID('dbo.VatTu','U') IS NOT NULL DROP TABLE dbo.VatTu;
+IF OBJECT_ID('dbo.NhaCungCap','U') IS NOT NULL DROP TABLE dbo.NhaCungCap;
+GO
+
+CREATE TABLE NhaCungCap(
+    MaNCC INT IDENTITY(1,1) PRIMARY KEY,
+    TenNCC NVARCHAR(150) NOT NULL,
+    DienThoai VARCHAR(15) NULL UNIQUE,
+    DiaChi NVARCHAR(255) NULL
+);
+CREATE TABLE VatTu(
+    MaVatTu VARCHAR(20) PRIMARY KEY,
+    TenVatTu NVARCHAR(150) NOT NULL,
+    DVT NVARCHAR(20) NULL,
+    SoLuongTon DECIMAL(18,2) NOT NULL CONSTRAINT DF_VatTu_Ton DEFAULT(0),
+    CONSTRAINT CK_VatTu_Ton CHECK(SoLuongTon >= 0)
+);
+CREATE TABLE PhieuKho(
+    MaPhieu INT IDENTITY(1,1) PRIMARY KEY,
+    LoaiPhieu NVARCHAR(10) NOT NULL CHECK(LoaiPhieu IN (N'NHAP',N'XUAT')),
+    NgayLap DATETIME NOT NULL DEFAULT(GETDATE()),
+    MaNCC INT NULL,
+    TongTien DECIMAL(18,2) NOT NULL DEFAULT(0),
+    CONSTRAINT FK_PhieuKho_NCC FOREIGN KEY(MaNCC) REFERENCES NhaCungCap(MaNCC)
+);
+CREATE TABLE ChiTietPhieuKho(
+    MaPhieu INT NOT NULL,
+    MaVatTu VARCHAR(20) NOT NULL,
+    SoLuong DECIMAL(18,2) NOT NULL CHECK(SoLuong > 0),
+    DonGia DECIMAL(18,2) NOT NULL CHECK(DonGia >= 0),
+    CONSTRAINT PK_ChiTietPhieuKho PRIMARY KEY(MaPhieu,MaVatTu),
+    CONSTRAINT FK_CT_Phieu FOREIGN KEY(MaPhieu) REFERENCES PhieuKho(MaPhieu),
+    CONSTRAINT FK_CT_VatTu FOREIGN KEY(MaVatTu) REFERENCES VatTu(MaVatTu)
+);
+GO
+INSERT INTO NhaCungCap(TenNCC,DienThoai,DiaChi) VALUES
+(N'Công ty Vật tư Minh Phát','0901000001',N'Hà Nội'),
+(N'Nhà cung cấp An Bình','0901000002',N'Hải Phòng');
+INSERT INTO VatTu(MaVatTu,TenVatTu,DVT,SoLuongTon) VALUES
+('VT001',N'Ốc vít','Cái',100),
+('VT002',N'Thép cuộn','Kg',50),
+('VT003',N'Thùng carton','Thùng',20);
+GO
